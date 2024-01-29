@@ -1,4 +1,13 @@
+all:
+	make docker-compose
+	make run
+	make check
+
+docker-compose:
+	docker compose up -d
+
 run:
-	docker-compose up -d
 	poetry run python docker_minio_error_reproduction
+
+check:
 	docker ps
