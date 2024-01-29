@@ -1,0 +1,30 @@
+name: reproduction
+services:
+  object-store:
+    command: server --console-address :9001 /data --address :9000
+    container_name: object-store
+    environment:
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: minioadmin
+    image: minio/minio:latest
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - ./tmp/minio_data:/data
+  minio-logger:
+    container_name: minio-logger
+    depends_on:
+      object-store:
+        condition: service_started
+        restart: true
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set minio http://object-store:9000 minioadmin minioadmin &&
+      mc admin trace -v -a minio > $(mktemp /tmp/minio.XXXXXX.log);"
+    environment:
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: minioadmin
+    image: minio/mc:latest
+    volumes:
+      - ./tmp/minio_logs/:/tmp
